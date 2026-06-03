@@ -19,7 +19,18 @@
 #   - countrycode     (convert country names -> ISO3 codes)
 #   - DT              (DTOutput / renderDT for the raw-data table)
 
+install.packages("shiny")
+install.packages("jsonlite")
+install.packages("plotly")
+install.packages("DT")
 
+library(shiny)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(DT)
+
+??jsonlite
 
 
 # -----------------------------------------------------------------------------
@@ -28,6 +39,10 @@
 
 # 1a. Load the data set
 #     - Read data_cia2.json into a data frame (placed in the app folder).
+
+mytable <- jsonlite::fromJSON("data_cia2.json")
+mytable <- as.data.frame(mytable)
+class(mytable)
 
 # 1b. Define a "lookup" between user-friendly variable labels and the actual
 #     column names in the data, e.g.:
@@ -39,6 +54,8 @@
 #       "Life expectancy"           -> life_exp column
 #     (Used so the UI never shows raw/code column names.)
 
+
+## MAP Data
 # 1c. Prepare the world map data for the map tab:
 #       world_map <- map_data("world")
 #     Add ISO3 codes via countrycode::countrycode(..., destination = "iso3c").
@@ -54,28 +71,77 @@
 # -----------------------------------------------------------------------------
 
 # 2a. Title of the app ("CIA World Factbook 2020").
-
+ui <- fluidPage(
+  title = "CIA World Factbook 2020"
 # 2b. A short "welcome" message describing what the app does.
+  "Welcome to my Shiny App, which allows you to visualize variables from the CIA 
+    factbook on the worldmap, generate descriptive statistic and statistical graphics!"
 
 # 2c. tabsetPanel() with TWO tabs: "Univariate analysis" and
 #     "Multivariate analysis".
-
-  # --- TAB 1: UNIVARIATE ANALYSIS (sidebarLayout) ---------------------------
-
-    # 2c-i. SIDEBAR:
-    #   - selectInput: choose ONE variable (education expenditure,
-    #     youth unemployment, net migration, population growth,
-    #     electricity fossil fuel, life expectancy) using friendly labels.
-    #   - actionButton "View raw data": when pressed, show a table in the
-    #     sidebar with Country, Continent and the selected variable's value.
-    #     Use DTOutput()/renderDT() (or dataTableOutput/renderDataTable).
-    #     Max 15 rows shown; use "nice" column names.
-
-    # 2c-ii. MAIN PANEL: a nested tabsetPanel with THREE tabs:
-    #   - "Map":             plotlyOutput  (interactive world map)
-    #   - "Global analysis": plotlyOutput x2 (boxplot + histogram/density)
-    #   - "Analysis per continent": plotlyOutput x2 (grouped boxplot +
-    #                               grouped density, grouped by continent)
+  tabsetPanel(
+    tabPanel("Univariate Analysis",
+             # --- TAB 1: UNIVARIATE ANALYSIS (sidebarLayout) ---------------------------
+             # 2c-i. SIDEBAR:
+             #   - selectInput: choose ONE variable (education expenditure,
+             #     youth unemployment, net migration, population growth,
+             #     electricity fossil fuel, life expectancy) using friendly labels.
+             #   - actionButton "View raw data": when pressed, show a table in the
+             #     sidebar with Country, Continent and the selected variable's value.
+             #     Use DTOutput()/renderDT() (or dataTableOutput/renderDataTable).
+             #     Max 15 rows shown; use "nice" column names.
+             sidebarPanel(
+               selectInput("variable_univariate", "Select a variable", 
+                           selected = "Education Expenditure", 
+                           choices = c("Education Expenditure","
+                                       Youth Unemployment Rate",
+                                       "Net Migration Rate", 
+                                       "Population Growth Rate", 
+                                       "Electricity Fossil Fuel", 
+                                       "Life Expectancy")),
+               actionButton("displaytable", "View Raw Data")
+             )
+             # 2c-ii. MAIN PANEL: a nested tabsetPanel with THREE tabs:
+             #   - "Map":             plotlyOutput  (interactive world map)
+             #   - "Global analysis": plotlyOutput x2 (boxplot + histogram/density)
+             #   - "Analysis per continent": plotlyOutput x2 (grouped boxplot +
+             #                               grouped density, grouped by continent)   
+             mainbarPanel(
+               tabsetPanel(
+                 tabPanel("Map"),
+                 tabPanel("Global Analysis"),
+                 tabPanel("Analysis per Continent")
+               )
+             )
+    ),
+    tabPanel("Multivariate Analysis"
+             sidebarPanel(
+               selectInput("variable_multivariate_1", 
+                           "Select variable 1", 
+                           selected = "Education Expenditure",
+                           choices = c("Education Expenditure","
+                                       Youth Unemployment Rate",
+                                       "Net Migration Rate", 
+                                       "Population Growth Rate", 
+                                       "Electricity Fossil Fuel", 
+                                       "Life Expectancy"))
+               selectInput("variable_multivariate_2", 
+                           "Select variable 2",
+                           selected = "Education Expenditure",
+                           choices = c("Education Expenditure","
+                                       Youth Unemployment Rate",
+                                       "Net Migration Rate", 
+                                       "Population Growth Rate", 
+                                       "Electricity Fossil Fuel", 
+                                       "Life Expectancy"))
+               selectInput("variable_sized", 
+                           "Scale points by:", 
+                           selected = "Area",
+                           choices = c("Area", "Population"))
+             )
+             )
+  )
+  
 
 
   # --- TAB 2: MULTIVARIATE ANALYSIS (sidebarLayout) -------------------------
@@ -94,7 +160,7 @@
     #     smooth lines are NOT sized.
 
 
-
+)
 
 # -----------------------------------------------------------------------------
 # 3. SERVER (server)
