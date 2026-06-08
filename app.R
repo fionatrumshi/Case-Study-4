@@ -187,12 +187,9 @@ server <- function(input, output, session){
   
     # Map friendly UI labels back to actual dataframe column names
     var_uni <- reactive({ column_lookup[[input$variable_univariate]] })
-    var_multi_1 <- reactive({ column_lookup[[input$variable_multivariate_1]] })
-    var_multi_2 <- reactive({ column_lookup[[input$variable_multivariate_2]] })
+    # var_multi_1 <- reactive({ column_lookup[[input$variable_multivariate_1]] })
+    # var_multi_2 <- reactive({ column_lookup[[input$variable_multivariate_2]] })
     var_size <- reactive({ input$variable_sized })
-    # Get the selected column from the input
-    # Return a subset of iris with just that column
-    # cia2020_table[, c("country","continent",input$variable_univariate), drop = FALSE]
     selected_data <- eventReactive(input$displaytable, {
       col_name <- var_uni()
       df_sub <- cia2020_table[, c("country", "continent", col_name), drop = FALSE]
